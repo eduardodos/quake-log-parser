@@ -3,3 +3,5 @@
     <input type="file" id="log" accept=".log" (change)="onLogChange($event)" #logInput />
   </div>
 </form>
+
+<pre *ngIf="gamesJson">{{gamesJson | json}}</pre>

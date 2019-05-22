@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 
 @Component({
   selector: 'app-log-uploader',
@@ -7,7 +7,8 @@ import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 })
 export class LogUploaderComponent implements OnInit {
   lines: string[];
-  games = {};
+  gamesLog = {};
+  gamesJson: object;
 
   constructor() {}
 
@@ -22,15 +23,30 @@ export class LogUploaderComponent implements OnInit {
   }
 
   logResolver(log) {
-    // transforma o arquivo de log em linhas
+    // transforma o arquivo de log em linhas para facilitar o trabalho
     this.lines = log.split(/[0-9]?[0-9]?[0-9]:[0-9][0-9]/);
+
+    this.createGamesLog();
+
+    this.createGamesObject();
+  }
+
+  createGamesObject(): void {
+    this.gamesJson = {};
+
+    for (const key in this.gamesLog) {
+      this.gamesJson[key] = this.generateGameObject(this.gamesLog[key]);
+    }
+  }
+
+  createGamesLog(): void {
     let gameNumber = 0;
     let currentGame = [];
 
     this.lines.forEach(line => {
       if (line.includes('InitGame:')) {
         if (gameNumber > 0) {
-          this.createGame(gameNumber, currentGame);
+          this.gamesLog[`game_${gameNumber}`] = currentGame;
         }
         gameNumber++;
         currentGame = [];
@@ -40,34 +56,25 @@ export class LogUploaderComponent implements OnInit {
     });
 
     // Cria o último jogo que o loop não pega
-    this.createGame(gameNumber, currentGame);
-
-    for (const key in this.games) {
-      this.games[key] = this.generateGameObject(this.games[key]);
-    }
-
-    console.log(this.games);
+    this.gamesLog[`game_${gameNumber}`] = currentGame;
   }
 
-  createGame(gameNumber: number, game: string[]) {
-    this.games[`game_${gameNumber}`] = game;
-  }
-
-  generateGameObject(game) {
+  generateGameObject(game): object {
     let gameKills = game.filter(gameLine => gameLine.includes('Kill: '));
     let clientsUserInfo = game.filter(gameLine => gameLine.includes('ClientUserinfoChanged'));
 
     // pega a lista de players
     let players = clientsUserInfo.map(clientInfo => clientInfo.split('\\')[1]);
+
     // filtra em caso de nomes repetidos
     players = players.filter(this.onlyUnique);
+
     // retira da frase tudo aquilo qeu não é necessário para contabilizar as kills
     let gameKillLog = gameKills.map(gameKill =>
       gameKill.substring(gameKill.indexOf(':', 6) + 2, gameKill.indexOf('by') - 1)
     );
 
-    // o primeiro item do array recebe a kill
-    // caso o primeiro seja o <world> o segundo elemento perde uma kill
+    // transforma o array de string em um array de array, onde cara um tem duas string, o player que matou e na segunda o player que morreu
     gameKillLog = gameKillLog.map(log => log.split(' killed '));
 
     const kills = {};
@@ -76,8 +83,8 @@ export class LogUploaderComponent implements OnInit {
       kills[key] = 0;
     }
 
-    // console.log(gameKillLog);
-
+    // o primeiro item do array recebe a kill
+    // caso o primeiro seja o <world> o segundo elemento perde uma kill
     gameKillLog.forEach(log => {
       if (log[0] === '<world>') {
         kills[log[1]] -= 1;
@@ -86,20 +93,16 @@ export class LogUploaderComponent implements OnInit {
       }
     });
 
-    // console.log(kills);
-
     const gameObject = {
       total_kills: gameKills.length,
       players,
       kills
     };
 
-    // console.log(gameObject);
-
     return gameObject;
   }
 
-  onlyUnique(value, index, self) {
+  onlyUnique(value, index, self): boolean {
     return self.indexOf(value) === index;
   }
 }
