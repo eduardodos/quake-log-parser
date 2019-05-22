@@ -6,7 +6,6 @@ import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
   styleUrls: ['./log-uploader.component.css']
 })
 export class LogUploaderComponent implements OnInit {
-  @ViewChild('logInput') logInput: ElementRef;
   lines: string[];
   games = {};
 
@@ -43,7 +42,11 @@ export class LogUploaderComponent implements OnInit {
     // Cria o último jogo que o loop não pega
     this.createGame(gameNumber, currentGame);
 
-    this.generateGameObject(this.games['game_13']);
+    for (const key in this.games) {
+      this.games[key] = this.generateGameObject(this.games[key]);
+    }
+
+    console.log(this.games);
   }
 
   createGame(gameNumber: number, game: string[]) {
@@ -52,9 +55,7 @@ export class LogUploaderComponent implements OnInit {
 
   generateGameObject(game) {
     let gameKills = game.filter(gameLine => gameLine.includes('Kill: '));
-    let clientsUserInfo = game.filter(gameLine =>
-      gameLine.includes('ClientUserinfoChanged')
-    );
+    let clientsUserInfo = game.filter(gameLine => gameLine.includes('ClientUserinfoChanged'));
 
     // pega a lista de players
     let players = clientsUserInfo.map(clientInfo => clientInfo.split('\\')[1]);
@@ -62,19 +63,40 @@ export class LogUploaderComponent implements OnInit {
     players = players.filter(this.onlyUnique);
     // retira da frase tudo aquilo qeu não é necessário para contabilizar as kills
     let gameKillLog = gameKills.map(gameKill =>
-      gameKill.substring(
-        gameKill.indexOf(':', 6) + 2,
-        gameKill.indexOf('by') - 1
-      )
+      gameKill.substring(gameKill.indexOf(':', 6) + 2, gameKill.indexOf('by') - 1)
     );
 
     // o primeiro item do array recebe a kill
     // caso o primeiro seja o <world> o segundo elemento perde uma kill
-    gameKillLog.forEach(element => {
-      console.log(element.split(' killed '));
+    gameKillLog = gameKillLog.map(log => log.split(' killed '));
+
+    const kills = {};
+
+    for (const key of players) {
+      kills[key] = 0;
+    }
+
+    // console.log(gameKillLog);
+
+    gameKillLog.forEach(log => {
+      if (log[0] === '<world>') {
+        kills[log[1]] -= 1;
+      } else {
+        kills[log[0]] += 1;
+      }
     });
 
-    // TODO fazer os calculos das kills para gerar o objeto
+    // console.log(kills);
+
+    const gameObject = {
+      total_kills: gameKills.length,
+      players,
+      kills
+    };
+
+    // console.log(gameObject);
+
+    return gameObject;
   }
 
   onlyUnique(value, index, self) {
