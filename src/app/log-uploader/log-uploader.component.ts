@@ -1,5 +1,4 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
-import { LineToLineMappedSource } from 'webpack-sources';
 
 @Component({
   selector: 'app-log-uploader',
@@ -9,6 +8,7 @@ import { LineToLineMappedSource } from 'webpack-sources';
 export class LogUploaderComponent implements OnInit {
   @ViewChild('logInput') logInput: ElementRef;
   lines: string[];
+  games = {};
 
   constructor() {}
 
@@ -23,6 +23,7 @@ export class LogUploaderComponent implements OnInit {
   }
 
   logResolver(log) {
+    // transforma o arquivo de log em linhas
     this.lines = log.split(/[0-9]?[0-9]?[0-9]:[0-9][0-9]/);
     let gameNumber = 0;
     let currentGame = [];
@@ -41,11 +42,27 @@ export class LogUploaderComponent implements OnInit {
 
     // Cria o último jogo que o loop não pega
     this.createGame(gameNumber, currentGame);
+
+    this.generateGameObject(this.games['game_13']);
   }
 
   createGame(gameNumber: number, game: string[]) {
-    console.log(`GameNumber: ${gameNumber}`);
-    console.log('----');
-    console.log(game);
+    this.games[`game_${gameNumber}`] = game;
+  }
+
+  generateGameObject(game) {
+    let gameKills = game.filter(gameLine => gameLine.includes('Kill: '));
+    let clientsUserInfo = game.filter(gameLine =>
+      gameLine.includes('ClientUserinfoChanged')
+    );
+
+    // pega a lista de players
+    let players = clientsUserInfo.map(clientInfo => clientInfo.split('\\')[1]);
+    // filtra em caso de nomes repetidos
+    players = players.filter(this.onlyUnique);
+  }
+
+  onlyUnique(value, index, self) {
+    return self.indexOf(value) === index;
   }
 }
