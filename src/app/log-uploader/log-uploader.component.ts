@@ -60,6 +60,21 @@ export class LogUploaderComponent implements OnInit {
     let players = clientsUserInfo.map(clientInfo => clientInfo.split('\\')[1]);
     // filtra em caso de nomes repetidos
     players = players.filter(this.onlyUnique);
+    // retira da frase tudo aquilo qeu não é necessário para contabilizar as kills
+    let gameKillLog = gameKills.map(gameKill =>
+      gameKill.substring(
+        gameKill.indexOf(':', 6) + 2,
+        gameKill.indexOf('by') - 1
+      )
+    );
+
+    // o primeiro item do array recebe a kill
+    // caso o primeiro seja o <world> o segundo elemento perde uma kill
+    gameKillLog.forEach(element => {
+      console.log(element.split(' killed '));
+    });
+
+    // TODO fazer os calculos das kills para gerar o objeto
   }
 
   onlyUnique(value, index, self) {
