@@ -60,8 +60,11 @@ export class LogUploaderComponent implements OnInit {
   }
 
   generateGameObject(game): object {
+    let meanOfDeath = {};
     let gameKills = game.filter(gameLine => gameLine.includes('Kill: '));
-    let clientsUserInfo = game.filter(gameLine => gameLine.includes('ClientUserinfoChanged'));
+    let clientsUserInfo = game.filter(gameLine =>
+      gameLine.includes('ClientUserinfoChanged')
+    );
 
     // pega a lista de players
     let players = clientsUserInfo.map(clientInfo => clientInfo.split('\\')[1]);
@@ -69,9 +72,19 @@ export class LogUploaderComponent implements OnInit {
     // filtra em caso de nomes repetidos
     players = players.filter(this.onlyUnique);
 
+    let meanOfDeathList = this.meanOfDeathListCreator(gameKills)
+    meanOfDeathList.forEach(element => {
+      meanOfDeath[element] = 0
+    });
+
     // retira da frase tudo aquilo qeu não é necessário para contabilizar as kills
-    let gameKillLog = gameKills.map(gameKill =>
-      gameKill.substring(gameKill.indexOf(':', 6) + 2, gameKill.indexOf('by') - 1)
+    let gameKillLog = gameKills.map(gameKill => {
+      meanOfDeath[this.getMeanOfDeath(gameKill)] += 1;
+      return gameKill.substring(
+        gameKill.indexOf(':', 6) + 2,
+        gameKill.indexOf('by') - 1
+      )
+    }
     );
 
     // transforma o array de string em um array de array, onde cara um tem duas string, o player que matou e na segunda o player que morreu
@@ -96,7 +109,8 @@ export class LogUploaderComponent implements OnInit {
     const gameObject = {
       total_kills: gameKills.length,
       players,
-      kills
+      kills,
+      means_of_death: meanOfDeath
     };
 
     return gameObject;
@@ -104,5 +118,15 @@ export class LogUploaderComponent implements OnInit {
 
   onlyUnique(value, index, self): boolean {
     return self.indexOf(value) === index;
+  }
+
+  meanOfDeathListCreator(kills) {
+    kills = kills.map(element => this.getMeanOfDeath(element));
+    return kills.filter(this.onlyUnique)
+  }
+
+  getMeanOfDeath(killLog): string {
+    killLog = killLog.substring(killLog.indexOf('by ') + 3);
+    return killLog.replace(/\r?\n|\r/, '').trim();
   }
 }
