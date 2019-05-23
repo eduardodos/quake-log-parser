@@ -1,7 +1,8 @@
 <form>
   <div class="upload-btn-wrapper">
-    <input type="file" id="log" accept=".log" (change)="onLogChange($event)" #logInput />
+    <button class="btn">Log Upload</button>
+    <input type="file" id="log" accept=".log" (change)="onLogChange($event)" />
   </div>
 </form>
 
-<pre *ngIf="gamesJson">{{gamesJson | json}}</pre>
+<pre class="json-panel" *ngIf="gamesJson">{{ gamesJson | json }}</pre>

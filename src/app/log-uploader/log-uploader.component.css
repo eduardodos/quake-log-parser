@@ -1,0 +1,36 @@
+.upload-btn-wrapper {
+  position: relative;
+  overflow: hidden;
+  display: inline-block;
+}
+
+.btn {
+  border: 2px solid gray;
+  color: gray;
+  background-color: white;
+  padding: 8px 16px;
+  font-size: 15px;
+  font-weight: bold;
+}
+
+.upload-btn-wrapper input[type='file'] {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+}
+
+.json-panel {
+  margin: 0 auto;
+  max-width: 900px;
+  border-radius: 20px;
+  background: #ddd4d4;
+  border: #fff double;
+  padding: 10px;
+  margin-bottom: 60px;
+}
+
+form {
+  text-align: center;
+  margin: 25px;
+}
