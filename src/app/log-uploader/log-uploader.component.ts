@@ -5,14 +5,10 @@ import { Component, OnInit } from '@angular/core';
   templateUrl: './log-uploader.component.html',
   styleUrls: ['./log-uploader.component.css']
 })
-export class LogUploaderComponent implements OnInit {
-  lines: string[];
+export class LogUploaderComponent {
+  logLines: string[];
   gamesLog = {};
   gamesJson: object;
-
-  constructor() {}
-
-  ngOnInit() {}
 
   onLogChange(event) {
     const reader = new FileReader();
@@ -24,7 +20,7 @@ export class LogUploaderComponent implements OnInit {
 
   logResolver(log) {
     // transforma o arquivo de log em linhas para facilitar o trabalho
-    this.lines = log.split(/[0-9]?[0-9]?[0-9]:[0-9][0-9]/);
+    this.logLines = log.split(/[0-9]?[0-9]?[0-9]:[0-9][0-9]/);
 
     this.createGamesLog();
 
@@ -43,7 +39,7 @@ export class LogUploaderComponent implements OnInit {
     let gameNumber = 0;
     let currentGame = [];
 
-    this.lines.forEach(line => {
+    this.logLines.forEach(line => {
       if (line.includes('InitGame:')) {
         if (gameNumber > 0) {
           this.gamesLog[`game_${gameNumber}`] = currentGame;
@@ -60,9 +56,9 @@ export class LogUploaderComponent implements OnInit {
   }
 
   generateGameObject(game): object {
-    let meanOfDeath = {};
-    let gameKills = game.filter(gameLine => gameLine.includes('Kill: '));
-    let clientsUserInfo = game.filter(gameLine =>
+    const meanOfDeath = {};
+    const gameKills = game.filter(gameLine => gameLine.includes('Kill: '));
+    const clientsUserInfo = game.filter(gameLine =>
       gameLine.includes('ClientUserinfoChanged')
     );
 
@@ -72,9 +68,9 @@ export class LogUploaderComponent implements OnInit {
     // filtra em caso de nomes repetidos
     players = players.filter(this.onlyUnique);
 
-    let meanOfDeathList = this.meanOfDeathListCreator(gameKills)
-    meanOfDeathList.forEach(element => {
-      meanOfDeath[element] = 0
+    const meansOfDeath = this.meanOfDeathListCreator(gameKills);
+    meansOfDeath.forEach(mean => {
+      meanOfDeath[mean] = 0;
     });
 
     // retira da frase tudo aquilo qeu não é necessário para contabilizar as kills
@@ -83,9 +79,8 @@ export class LogUploaderComponent implements OnInit {
       return gameKill.substring(
         gameKill.indexOf(':', 6) + 2,
         gameKill.indexOf('by') - 1
-      )
-    }
-    );
+      );
+    });
 
     // transforma o array de string em um array de array, onde cara um tem duas string, o player que matou e na segunda o player que morreu
     gameKillLog = gameKillLog.map(log => log.split(' killed '));
@@ -122,7 +117,7 @@ export class LogUploaderComponent implements OnInit {
 
   meanOfDeathListCreator(kills) {
     kills = kills.map(element => this.getMeanOfDeath(element));
-    return kills.filter(this.onlyUnique)
+    return kills.filter(this.onlyUnique);
   }
 
   getMeanOfDeath(killLog): string {
